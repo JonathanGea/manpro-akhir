@@ -1,0 +1,5 @@
+2022-06-28 05:59:43: csv process started
+2022-06-28 05:59:43: Call xml parser
+2022-06-28 05:59:43: read xml result
+2022-06-28 05:59:43: xml process success
+2022-06-28 05:59:43: csv process ended

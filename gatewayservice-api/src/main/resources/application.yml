@@ -1,0 +1,50 @@
+## YAML Template.
+
+server:
+    port: 1001
+ 
+eureka:
+    client:
+        serviceUrl:
+            defaultZone: http://localhost:8761/eureka/
+
+spring:
+    application:
+        name: gatewayservice-api
+    cloud:
+        gateway:
+            routes:
+            - id: csvservice-app
+              uri: lb://csvservice-app
+              predicates:
+              - Path=/csvdataentry/convertxml
+            - id: xmlserviceapp-b
+              uri: lb://xmlserviceapp-b
+              predicates:
+              - Path=/xmldataentry/processxml
+            - id: dbservice-app
+              uri: lb://dbservice-app
+              predicates:
+              - Path=/products/finds
+            - id: dbservice-app
+              uri: lb://dbservice-app
+              predicates:
+              - Path=/products/findallbyidanddate
+            - id: dbservice-app
+              uri: lb://dbservice-app
+              predicates:
+              - Path=/products/getallsumstock
+            - id: logserviceapp-c
+              uri: lb://logserviceapp-c
+              predicates:
+              - Path=/logservice/postlog
+            - id: discovery-server
+              uri: http://localhost:8761
+              predicates:
+              - Path=/eureka/web
+              filters:
+              - SetPath=/
+            - id: discovery-server-static
+              uri: http://localhost:8761
+              predicates:
+              - Path=/eureka/**
