@@ -15,6 +15,7 @@ import java.util.List;
 import org.hibernate.query.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -44,14 +45,21 @@ public class ProductService {
         return productRepo.getAllSumStock();
     }
     
-    SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
-//    Session session = sessionFactory.getCurrentSession();
-    Session session = sessionFactory.openSession();
-    String hql = "SELECT p.productId, p.transDate, SUM(p.stock) FROM Product p GROUP BY p.productId";
-    Query query = session.createQuery(hql);
+    
     public List<Product> getAllSumStock1(){
+        
+        SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
+//        Session session = sessionFactory.getCurrentSession();
+        Session session = sessionFactory.openSession();
+        
+        String hql = "SELECT p.productId, p.transDate, SUM(p.stock) FROM Product p GROUP BY p.productId";
+        Query query = session.createQuery(hql);
         List<Product> result = query.list();
+        
+        session.close();
+        sessionFactory.close();
         return result;
+        
     }
     
 }
