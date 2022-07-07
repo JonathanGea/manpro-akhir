@@ -5,8 +5,19 @@
  */
 package com.mycompany.dataentryapp;
 
+import com.google.gson.Gson;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 
@@ -162,29 +173,98 @@ public class MainFrame extends javax.swing.JFrame {
     private List<String[]> listData = new ArrayList<String[]>();
     
     private void cmdAddActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddActionPerformed
-        // TODO add your handling code here:
-        listData.add(new String[]{
-            txtProductId.getText(),
-            txtDate.getText()
-        });
+        try {
+            String endpoint = "http://localhost:2003/products/findallbyidanddate";
+            Date tgl = new SimpleDateFormat("yyyy-MM-dd").parse(txtDate.getText());
+            PostRequest pr = new PostRequest(txtProductId.getText(), tgl);
+            String input = new Gson().toJson(pr);
+            
+            String result = postRequest(endpoint, input);
+            System.out.println(result);
+            
+            ResponseRest restObj = new Gson().fromJson(result, ResponseRest.class);
+            
+//            listData.add(new String[]{
+//                txtProductId.getText(),
+//                txtDate.getText()
+//            });
+            
+            List<Product> data = restObj.getData();
+            String[] columnsName = {"ProductId", "Date", "Stock"};
+            String[][] arrData = new String[data.size()][3];
+//            String[] title = new String[]{"ProductId", "Date", "Stock"};
+//            String[][] dataTable = new String[listData.size()][3];
 
-        String[] title = new String[]{"ProductId", "Date", "Stock"};
-        String[][] dataTable = new String[listData.size()][3];
+//            for (int i = 0; i < listData.size(); i++) {
+//                dataTable[i][0] = listData.get(i)[0];
+//                dataTable[i][1] = listData.get(i)[1];
+//                dataTable[i][2] = "";
+//            }
+            int index = 0;
+            for (Product product : restObj.getData()){
+                arrData[index][0] = product.getProductId().toString();
+                arrData[index][1] = product.getTransDate().toString();
+                arrData[index][2] = product.getStock().toString();
+                
+                index++;
+                System.out.println(product.getProductId());
+            }
 
-        for (int i = 0; i < listData.size(); i++) {
-            dataTable[i][0] = listData.get(i)[0];
-            dataTable[i][1] = listData.get(i)[1];
-            dataTable[i][2] = "";
+            //        tProduct.setModel(new DefaultTableModel(new Object[][]{
+            //            "", "", ""
+            //        }, title));
+
+            //DefaultTableModel defaultTableModel = new DefaultTableModel(dataTable, title);
+            //tProduct.setModel(defaultTableModel);
+            tProduct.setModel(new DefaultTableModel(arrData, columnsName));
+        } catch (ParseException ex) {
+            Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
         }
-
-//        tProduct.setModel(new DefaultTableModel(new Object[][]{
-//            "", "", ""
-//        }, title));
-
-        DefaultTableModel defaultTableModel = new DefaultTableModel(dataTable, title);
-        tProduct.setModel(defaultTableModel);
     }//GEN-LAST:event_cmdAddActionPerformed
 
+    static String postRequest(String endpoint, String input) {
+        String result = "";
+        try {
+            URL url = new URL(endpoint);
+            HttpURLConnection con = (HttpURLConnection) url.openConnection();
+            con.setRequestMethod("POST");
+            con.setRequestProperty("Content-Type", "application/json");
+            con.setDoOutput(true);
+
+            OutputStream os = con.getOutputStream();
+            os.write(input.getBytes());
+            os.flush();
+            os.close();
+
+            System.out.println("POST Response Code :: " + con.getResponseCode());
+            
+            if (con.getResponseCode() == HttpURLConnection.HTTP_OK) { //success
+                BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream()));
+                String inputLine;
+                System.out.println("Output from Server .... \n");
+                StringBuffer response = new StringBuffer();
+                while ((inputLine = br.readLine()) != null) {
+                    System.out.println(inputLine);
+                    result = inputLine;
+                    response.append(inputLine);
+                }
+                br.close();
+                
+                // print result
+                System.out.println(response.toString());
+            } else {
+                System.out.println("POST request not worked");
+                throw new RuntimeException("Failed : HTTP error code : " + con.getResponseCode());
+            }
+            
+            con.disconnect();
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+    
     private void cmdCalcActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCalcActionPerformed
         // TODO add your handling code here:
         String csvContent = "";
